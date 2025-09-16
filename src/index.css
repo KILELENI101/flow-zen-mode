@@ -2,41 +2,94 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* FocusFlow Web Design System - All colors, gradients, fonts, etc defined here */
 
 @layer base {
   :root {
+    /* Core Brand Colors (HSL) */
     --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --foreground: 0 60% 18%; /* Deep Maroon for text */
 
+    /* FocusFlow Brand Palette */
+    --maroon: 0 60% 18%; /* Deep Maroon #4A0F0F */
+    --maroon-light: 0 50% 25%;
+    --maroon-dark: 0 70% 12%;
+    
+    --royal-blue: 227 100% 56%; /* Royal Blue #1E5CFF */
+    --royal-blue-light: 227 100% 65%;
+    --royal-blue-dark: 227 100% 45%;
+    
+    --emerald: 167 90% 35%; /* Emerald Green #0FA77E */
+    --emerald-light: 167 80% 45%;
+    --emerald-dark: 167 95% 25%;
+    
+    --golden: 44 100% 67%; /* Golden Yellow #FFD055 */
+    --golden-light: 44 100% 75%;
+    --golden-dark: 44 100% 55%;
+    
+    --violet: 258 100% 64%; /* Violet/Purple #8C4BFF */
+    --violet-light: 258 100% 72%;
+    --violet-dark: 258 100% 55%;
+    
+    --cyan: 180 95% 42%; /* Cyan/Teal #0FCFC9 */
+    --cyan-light: 180 85% 52%;
+    --cyan-dark: 180 100% 32%;
+
+    /* Semantic Tokens */
+    --primary: var(--royal-blue);
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: var(--royal-blue-dark);
+
+    --secondary: 0 0% 96%;
+    --secondary-foreground: var(--maroon);
+
+    --success: var(--emerald);
+    --success-foreground: 0 0% 100%;
+
+    --warning: var(--golden);
+    --warning-foreground: var(--maroon);
+
+    --accent: var(--violet);
+    --accent-foreground: 0 0% 100%;
+
+    --info: var(--cyan);
+    --info-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: var(--royal-blue);
+
+    /* Card System */
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: var(--maroon);
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: var(--maroon);
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--royal-blue)), hsl(var(--royal-blue-light)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--emerald)), hsl(var(--emerald-light)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--violet)), hsl(var(--violet-light)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--maroon)), hsl(var(--royal-blue)));
+    --gradient-break: linear-gradient(135deg, hsl(var(--emerald)), hsl(var(--cyan)));
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(var(--maroon) / 0.05);
+    --shadow-md: 0 4px 6px -1px hsl(var(--maroon) / 0.1), 0 2px 4px -1px hsl(var(--maroon) / 0.06);
+    --shadow-lg: 0 10px 15px -3px hsl(var(--maroon) / 0.1), 0 4px 6px -2px hsl(var(--maroon) / 0.05);
+    --shadow-glow: 0 0 20px hsl(var(--royal-blue) / 0.3);
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     --sidebar-background: 0 0% 98%;
 
@@ -100,6 +153,134 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--muted));
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--maroon) / 0.3);
+    border-radius: 3px;
+  }
+}
+
+@layer components {
+  /* Timer Ring Animation */
+  .timer-ring {
+    transform-origin: center;
+    animation: timer-pulse 2s ease-in-out infinite;
+  }
+
+  /* Focus Mode Indicator */
+  .focus-indicator {
+    animation: focus-glow 3s ease-in-out infinite alternate;
+  }
+
+  /* Break Mode Animation */
+  .break-animation {
+    animation: gentle-float 4s ease-in-out infinite;
+  }
+
+  /* Productivity Cards */
+  .productivity-card {
+    background: var(--gradient-primary);
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition-smooth);
+  }
+
+  .productivity-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+  }
+}
+
+@layer utilities {
+  /* Brand Gradient Utilities */
+  .bg-gradient-primary {
+    background: var(--gradient-primary);
+  }
+  
+  .bg-gradient-success {
+    background: var(--gradient-success);
+  }
+  
+  .bg-gradient-accent {
+    background: var(--gradient-accent);
+  }
+  
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+  
+  .bg-gradient-break {
+    background: var(--gradient-break);
+  }
+
+  /* Animation Utilities */
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+  
+  .transition-bounce {
+    transition: var(--transition-bounce);
+  }
+}
+
+/* Keyframe Animations */
+@keyframes timer-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+@keyframes focus-glow {
+  0% {
+    box-shadow: 0 0 5px hsl(var(--royal-blue) / 0.3);
+  }
+  100% {
+    box-shadow: 0 0 20px hsl(var(--royal-blue) / 0.6);
+  }
+}
+
+@keyframes gentle-float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes slide-in-bottom {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-scale {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
   }
 }

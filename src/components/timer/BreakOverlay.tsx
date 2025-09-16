@@ -39,6 +39,8 @@ export default function BreakOverlay({ isVisible, onClose, duration }: BreakOver
   useEffect(() => {
     if (isVisible) {
       setTimeLeft(duration * 60);
+      setShowEmergencyConfirm(false);
+      setReason("");
       // Request fullscreen
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(console.error);

@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
-import { Play, Pause, RotateCcw, Maximize } from "lucide-react";
+import { Play, Pause, RotateCcw, Maximize, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 interface TimerState {
@@ -12,30 +15,53 @@ interface TimerState {
   isRunning: boolean;
   mode: "focus" | "break";
   totalMinutes: number;
+  currentCycle: number;
+  maxCycles: number;
+}
+
+interface CustomSettings {
+  focusMinutes: number;
+  breakMinutes: number;
+  cycles: number;
 }
 
 interface TimerCardProps {
   onFullscreen?: () => void;
+  onBreakStart?: (duration: number) => void;
 }
 
 const timerPresets = [
   { name: "Pomodoro", focus: 25, break: 5, cycles: 4 },
   { name: "52/17", focus: 52, break: 17, cycles: 1 },
   { name: "90/20", focus: 90, break: 20, cycles: 1 },
-  { name: "20/20/20", focus: 20, break: 20, cycles: 3 },
+  { name: "20/20/20", focus: 20, break: 2, cycles: 3 },
+  { name: "Custom", focus: 25, break: 5, cycles: 1 },
 ];
 
-export default function TimerCard({ onFullscreen }: TimerCardProps) {
+export default function TimerCard({ onFullscreen, onBreakStart }: TimerCardProps) {
   const [selectedPreset, setSelectedPreset] = useState(0);
+  const [customSettings, setCustomSettings] = useState<CustomSettings>({
+    focusMinutes: 25,
+    breakMinutes: 5,
+    cycles: 1,
+  });
+  const [showCustomDialog, setShowCustomDialog] = useState(false);
   const [timer, setTimer] = useState<TimerState>({
     minutes: 25,
     seconds: 0,
     isRunning: false,
     mode: "focus",
     totalMinutes: 25,
+    currentCycle: 1,
+    maxCycles: 4,
   });
 
-  const currentPreset = timerPresets[selectedPreset];
+  const currentPreset = selectedPreset === 4 ? {
+    name: "Custom",
+    focus: customSettings.focusMinutes,
+    break: customSettings.breakMinutes,
+    cycles: customSettings.cycles,
+  } : timerPresets[selectedPreset];
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -49,18 +75,47 @@ export default function TimerCard({ onFullscreen }: TimerCardProps) {
             return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
           } else {
             // Timer finished
-            return { 
-              ...prev, 
-              isRunning: false,
-              mode: prev.mode === "focus" ? "break" : "focus"
-            };
+            if (prev.mode === "focus") {
+              // Focus session ended, start break
+              const breakDuration = currentPreset.break;
+              onBreakStart?.(breakDuration);
+              return { 
+                ...prev, 
+                isRunning: false,
+                mode: "break",
+                minutes: breakDuration,
+                seconds: 0,
+                totalMinutes: breakDuration,
+              };
+            } else {
+              // Break ended, check if we should start another cycle
+              const nextCycle = prev.currentCycle + 1;
+              if (nextCycle <= prev.maxCycles) {
+                return { 
+                  ...prev, 
+                  isRunning: false,
+                  mode: "focus",
+                  minutes: currentPreset.focus,
+                  seconds: 0,
+                  totalMinutes: currentPreset.focus,
+                  currentCycle: nextCycle,
+                };
+              } else {
+                // All cycles completed
+                return { 
+                  ...prev, 
+                  isRunning: false,
+                  currentCycle: 1,
+                };
+              }
+            }
           }
         });
       }, 1000);
     }
 
     return () => clearInterval(interval);
-  }, [timer.isRunning]);
+  }, [timer.isRunning, currentPreset.break, currentPreset.focus, onBreakStart]);
 
   const toggleTimer = () => {
     setTimer(prev => ({ ...prev, isRunning: !prev.isRunning }));
@@ -74,19 +129,43 @@ export default function TimerCard({ onFullscreen }: TimerCardProps) {
       isRunning: false,
       mode: "focus",
       totalMinutes: newDuration,
+      currentCycle: 1,
+      maxCycles: currentPreset.cycles,
     });
   };
 
   const selectPreset = (index: number) => {
     setSelectedPreset(index);
-    const preset = timerPresets[index];
+    const preset = index === 4 ? {
+      focus: customSettings.focusMinutes,
+      break: customSettings.breakMinutes,
+      cycles: customSettings.cycles,
+    } : timerPresets[index];
+    
     setTimer({
       minutes: preset.focus,
       seconds: 0,
       isRunning: false,
       mode: "focus",
       totalMinutes: preset.focus,
+      currentCycle: 1,
+      maxCycles: preset.cycles,
     });
+  };
+
+  const updateCustomSettings = () => {
+    if (selectedPreset === 4) {
+      setTimer({
+        minutes: customSettings.focusMinutes,
+        seconds: 0,
+        isRunning: false,
+        mode: "focus",
+        totalMinutes: customSettings.focusMinutes,
+        currentCycle: 1,
+        maxCycles: customSettings.cycles,
+      });
+    }
+    setShowCustomDialog(false);
   };
 
   const progress = ((timer.totalMinutes * 60 - (timer.minutes * 60 + timer.seconds)) / (timer.totalMinutes * 60)) * 100;
@@ -95,21 +174,90 @@ export default function TimerCard({ onFullscreen }: TimerCardProps) {
   return (
     <div className="space-y-6">
       {/* Preset Selection */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {timerPresets.map((preset, index) => (
           <Button
             key={preset.name}
             variant={selectedPreset === index ? "default" : "outline"}
             onClick={() => selectPreset(index)}
             className={cn(
-              "h-auto p-3 flex flex-col items-center gap-1 transition-smooth",
+              "h-auto p-3 flex flex-col items-center gap-1 transition-smooth relative",
               selectedPreset === index && "bg-gradient-primary"
             )}
           >
             <span className="font-semibold text-sm">{preset.name}</span>
             <span className="text-xs opacity-80">
-              {preset.focus}m / {preset.break}m
+              {index === 4 ? `${customSettings.focusMinutes}m / ${customSettings.breakMinutes}m` : `${preset.focus}m / ${preset.break}m`}
             </span>
+            {index === 4 && (
+              <Dialog open={showCustomDialog} onOpenChange={setShowCustomDialog}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-1 right-1 h-6 w-6 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowCustomDialog(true);
+                    }}
+                  >
+                    <Settings className="w-3 h-3" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Custom Timer Settings</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="focus-minutes">Focus Time (minutes)</Label>
+                      <Input
+                        id="focus-minutes"
+                        type="number"
+                        min="1"
+                        max="180"
+                        value={customSettings.focusMinutes}
+                        onChange={(e) => setCustomSettings(prev => ({
+                          ...prev,
+                          focusMinutes: parseInt(e.target.value) || 25
+                        }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="break-minutes">Break Time (minutes)</Label>
+                      <Input
+                        id="break-minutes"
+                        type="number"
+                        min="1"
+                        max="60"
+                        value={customSettings.breakMinutes}
+                        onChange={(e) => setCustomSettings(prev => ({
+                          ...prev,
+                          breakMinutes: parseInt(e.target.value) || 5
+                        }))}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cycles">Number of Cycles</Label>
+                      <Input
+                        id="cycles"
+                        type="number"
+                        min="1"
+                        max="10"
+                        value={customSettings.cycles}
+                        onChange={(e) => setCustomSettings(prev => ({
+                          ...prev,
+                          cycles: parseInt(e.target.value) || 1
+                        }))}
+                      />
+                    </div>
+                    <Button onClick={updateCustomSettings} className="w-full">
+                      Apply Settings
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
           </Button>
         ))}
       </div>
@@ -132,6 +280,9 @@ export default function TimerCard({ onFullscreen }: TimerCardProps) {
           <CardTitle className="text-lg text-muted-foreground">
             {currentPreset.name} - {timer.mode === "focus" ? "Stay Focused" : "Take a Break"}
           </CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Session {timer.currentCycle} of {timer.maxCycles}
+          </p>
         </CardHeader>
 
         <CardContent className="space-y-6">

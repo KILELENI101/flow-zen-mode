@@ -6,7 +6,14 @@ import ReminderSettings from "@/components/timer/ReminderSettings";
 export default function TimerView() {
   const [showBreakOverlay, setShowBreakOverlay] = useState(false);
 
+  const [breakDuration, setBreakDuration] = useState(5);
+
   const handleFullscreen = () => {
+    setShowBreakOverlay(true);
+  };
+
+  const handleBreakStart = (duration: number) => {
+    setBreakDuration(duration);
     setShowBreakOverlay(true);
   };
 
@@ -29,7 +36,7 @@ export default function TimerView() {
 
       <div className="grid lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <TimerCard onFullscreen={handleFullscreen} />
+          <TimerCard onFullscreen={handleFullscreen} onBreakStart={handleBreakStart} />
         </div>
         
         <div className="space-y-6">
@@ -40,7 +47,7 @@ export default function TimerView() {
       <BreakOverlay
         isVisible={showBreakOverlay}
         onClose={handleCloseBreak}
-        duration={5} // 5 minute break
+        duration={breakDuration}
       />
     </div>
   );

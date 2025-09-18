@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Play, Pause, RotateCcw, Maximize, Settings } from "lucide-react";
+import { useSound } from "@/hooks/useSound";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -39,6 +40,7 @@ const timerPresets = [
 ];
 
 export default function TimerCard({ onFullscreen, onBreakStart }: TimerCardProps) {
+  const { playTimerSound, startFocusSound, stopFocusSound, startBreakSound, stopBreakSound } = useSound();
   const [selectedPreset, setSelectedPreset] = useState(0);
   const [customSettings, setCustomSettings] = useState<CustomSettings>({
     focusMinutes: 25,
@@ -77,8 +79,11 @@ export default function TimerCard({ onFullscreen, onBreakStart }: TimerCardProps
             // Timer finished
             if (prev.mode === "focus") {
               // Focus session ended, start break
+              playTimerSound('END');
+              stopFocusSound();
               const breakDuration = currentPreset.break;
               onBreakStart?.(breakDuration);
+              startBreakSound();
               return { 
                 ...prev, 
                 isRunning: false,
@@ -89,6 +94,8 @@ export default function TimerCard({ onFullscreen, onBreakStart }: TimerCardProps
               };
             } else {
               // Break ended, check if we should start another cycle
+              playTimerSound('BREAK_END');
+              stopBreakSound();
               const nextCycle = prev.currentCycle + 1;
               if (nextCycle <= prev.maxCycles) {
                 return { 
@@ -118,10 +125,28 @@ export default function TimerCard({ onFullscreen, onBreakStart }: TimerCardProps
   }, [timer.isRunning, currentPreset.break, currentPreset.focus, onBreakStart]);
 
   const toggleTimer = () => {
-    setTimer(prev => ({ ...prev, isRunning: !prev.isRunning }));
+    setTimer(prev => {
+      const newRunning = !prev.isRunning;
+      if (newRunning) {
+        // Starting timer
+        playTimerSound('START');
+        if (prev.mode === "focus") {
+          startFocusSound();
+        } else {
+          startBreakSound();
+        }
+      } else {
+        // Pausing timer
+        stopFocusSound();
+        stopBreakSound();
+      }
+      return { ...prev, isRunning: newRunning };
+    });
   };
 
   const resetTimer = () => {
+    stopFocusSound();
+    stopBreakSound();
     const newDuration = timer.mode === "focus" ? currentPreset.focus : currentPreset.break;
     setTimer({
       minutes: newDuration,

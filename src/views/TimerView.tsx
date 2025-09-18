@@ -1,7 +1,7 @@
 import { useState } from "react";
 import TimerCard from "@/components/timer/TimerCard";
 import BreakOverlay from "@/components/timer/BreakOverlay";
-import ReminderSettings from "@/components/timer/ReminderSettings";
+
 
 export default function TimerView() {
   const [showBreakOverlay, setShowBreakOverlay] = useState(false);
@@ -34,14 +34,8 @@ export default function TimerView() {
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <TimerCard onFullscreen={handleFullscreen} onBreakStart={handleBreakStart} />
-        </div>
-        
-        <div className="space-y-6">
-          <ReminderSettings />
-        </div>
+      <div className="max-w-4xl mx-auto">
+        <TimerCard onFullscreen={handleFullscreen} onBreakStart={handleBreakStart} />
       </div>
 
       <BreakOverlay

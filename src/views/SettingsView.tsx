@@ -1,13 +1,14 @@
-import { Settings, Palette, Volume2, Bell, Calendar, User, Shield, Download } from "lucide-react";
+import { Settings, Palette, Calendar, User, Shield, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import SoundSettings from "@/components/settings/SoundSettings";
+import BreakReminderSettings from "@/components/settings/BreakReminderSettings";
 
 export default function SettingsView() {
   return (
@@ -68,46 +69,11 @@ export default function SettingsView() {
           </CardContent>
         </Card>
 
-        {/* Audio & Notifications */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-maroon">
-              <Volume2 className="w-5 h-5" />
-              Audio & Notifications
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-3">
-              <Label>Master Volume</Label>
-              <Slider
-                defaultValue={[75]}
-                max={100}
-                step={5}
-                className="[&_[role=slider]]:bg-primary"
-              />
-            </div>
+        {/* Audio & Focus Sounds */}
+        <SoundSettings />
 
-            <div className="flex items-center justify-between">
-              <Label htmlFor="start-sound">Session Start Sound</Label>
-              <Switch id="start-sound" defaultChecked />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="end-sound">Session End Sound</Label>
-              <Switch id="end-sound" defaultChecked />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="break-reminder">Break Reminder Chime</Label>
-              <Switch id="break-reminder" defaultChecked />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="desktop-notifications">Desktop Notifications</Label>
-              <Switch id="desktop-notifications" />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Break Reminders */}
+        <BreakReminderSettings />
 
         {/* Timer Defaults */}
         <Card>

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Play, Pause, RotateCcw, Maximize, Settings } from "lucide-react";
 import { useSound } from "@/hooks/useSound";
 import { usePersistentTimer } from "@/hooks/usePeristentTimer";
+import { useStats } from "@/hooks/useStats";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -42,6 +43,7 @@ const timerPresets = [
 export default function TimerCard({ onBreakStart }: TimerCardProps) {
   const { playTimerSound, startFocusSound, stopFocusSound, startBreakSound, stopBreakSound } = useSound();
   const { timer, startTimer, pauseTimer, resetTimer, updateTimer } = usePersistentTimer();
+  const { addSession } = useStats();
   const [selectedPreset, setSelectedPreset] = useState(0);
   const [customSettings, setCustomSettings] = useState<CustomSettings>({
     focusMinutes: 25,
@@ -65,6 +67,16 @@ export default function TimerCard({ onBreakStart }: TimerCardProps) {
         // Focus session ended, start break
         playTimerSound('END');
         stopFocusSound();
+        
+        // Add session stats
+        addSession({
+          focusTime: timer.totalMinutes,
+          breakTime: 0,
+          sessionsCompleted: 1,
+          overrides: 0,
+          mode: 'focus',
+        });
+        
         const breakDuration = currentPreset.break;
         onBreakStart?.(breakDuration);
         startBreakSound();
@@ -78,6 +90,16 @@ export default function TimerCard({ onBreakStart }: TimerCardProps) {
         // Break ended, check if we should start another cycle
         playTimerSound('BREAK_END');
         stopBreakSound();
+        
+        // Add break stats
+        addSession({
+          focusTime: 0,
+          breakTime: timer.totalMinutes,
+          sessionsCompleted: 0,
+          overrides: 0,
+          mode: 'break',
+        });
+        
         const nextCycle = timer.currentCycle + 1;
         if (nextCycle <= timer.maxCycles) {
           updateTimer({ 
@@ -95,7 +117,7 @@ export default function TimerCard({ onBreakStart }: TimerCardProps) {
         }
       }
     }
-  }, [timer.minutes, timer.seconds, timer.isRunning, timer.mode, currentPreset, onBreakStart]);
+  }, [timer.minutes, timer.seconds, timer.isRunning, timer.mode, currentPreset, onBreakStart, addSession]);
 
   // Handle fullscreen changes
   useEffect(() => {

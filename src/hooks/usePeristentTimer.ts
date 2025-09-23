@@ -25,8 +25,9 @@ export const usePersistentTimer = () => {
       if (parsed.isRunning && parsed.startTime) {
         const now = Date.now();
         const elapsed = Math.floor((now - parsed.startTime) / 1000);
-        const totalSeconds = parsed.minutes * 60 + parsed.seconds;
-        const remaining = Math.max(0, totalSeconds - elapsed);
+        const totalSeconds = parsed.totalMinutes * 60;
+        const timePassed = elapsed + parsed.pausedTime;
+        const remaining = Math.max(0, totalSeconds - timePassed);
         
         return {
           ...parsed,

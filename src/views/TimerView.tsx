@@ -1,13 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TimerCard from "@/components/timer/TimerCard";
 import BreakOverlay from "@/components/timer/BreakOverlay";
 
-
 export default function TimerView() {
   const [showBreakOverlay, setShowBreakOverlay] = useState(false);
-
   const [breakDuration, setBreakDuration] = useState(5);
-
 
   const handleBreakStart = (duration: number) => {
     setBreakDuration(duration);

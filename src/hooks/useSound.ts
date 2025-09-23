@@ -76,8 +76,16 @@ export function useSound() {
   // Create or get audio element
   const getAudio = useCallback((soundPath: string): HTMLAudioElement => {
     if (!audioRefs.current.has(soundPath)) {
-      const audio = new Audio(soundPath);
+      const audio = new Audio();
       audio.preload = 'auto';
+      
+      // Handle loading errors gracefully
+      audio.addEventListener('error', () => {
+        console.warn('Failed to load audio file:', soundPath);
+      });
+      
+      // Set source after event listeners
+      audio.src = soundPath;
       audioRefs.current.set(soundPath, audio);
     }
     return audioRefs.current.get(soundPath)!;
@@ -89,15 +97,34 @@ export function useSound() {
     if (!settings.timerSoundsEnabled) return;
 
     try {
-      const soundPath = SOUND_CATEGORIES.TIMER.sounds[soundType].file;
-      const audio = getAudio(soundPath);
-      audio.volume = settings.masterVolume;
-      audio.currentTime = 0;
-      audio.play().catch(console.warn);
+      // Use Web Audio API to generate simple beep sounds as fallback
+      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      // Different frequencies for different sound types
+      const frequencies = {
+        START: 800,
+        END: 600,
+        BREAK_START: 400,
+        BREAK_END: 500,
+      };
+      
+      oscillator.frequency.setValueAtTime(frequencies[soundType], audioContext.currentTime);
+      oscillator.type = 'sine';
+      
+      gainNode.gain.setValueAtTime(settings.masterVolume * 0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+      
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.3);
     } catch (error) {
       console.warn('Failed to play timer sound:', error);
     }
-  }, [getAudio, getSettings]);
+  }, [getSettings]);
 
   // Start focus sound (looping ambient sound)
   const startFocusSound = useCallback((soundKey?: string) => {

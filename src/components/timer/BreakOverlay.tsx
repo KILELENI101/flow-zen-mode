@@ -32,15 +32,20 @@ export default function BreakOverlay({ isVisible, onClose, duration }: BreakOver
   const [timeLeft, setTimeLeft] = useState(duration * 60); // convert to seconds
   const [showEmergencyConfirm, setShowEmergencyConfirm] = useState(false);
   const [reason, setReason] = useState("");
+  const [messageIndex, setMessageIndex] = useState(0);
+  const [tipIndex, setTipIndex] = useState(0);
 
-  const currentMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
-  const currentTip = wellnessTips[Math.floor(Math.random() * wellnessTips.length)];
+  const currentMessage = motivationalMessages[messageIndex];
+  const currentTip = wellnessTips[tipIndex];
 
   useEffect(() => {
     if (isVisible) {
       setTimeLeft(duration * 60);
       setShowEmergencyConfirm(false);
       setReason("");
+      // Set consistent message for this break session
+      setMessageIndex(0); // Always use first message
+      setTipIndex(0); // Always use first tip
       // Request fullscreen
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(console.error);

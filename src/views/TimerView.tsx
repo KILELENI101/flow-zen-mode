@@ -8,9 +8,6 @@ export default function TimerView() {
 
   const [breakDuration, setBreakDuration] = useState(5);
 
-  const handleFullscreen = () => {
-    setShowBreakOverlay(true);
-  };
 
   const handleBreakStart = (duration: number) => {
     setBreakDuration(duration);
@@ -35,7 +32,7 @@ export default function TimerView() {
       </div>
 
       <div className="max-w-4xl mx-auto">
-        <TimerCard onFullscreen={handleFullscreen} onBreakStart={handleBreakStart} />
+        <TimerCard onBreakStart={handleBreakStart} />
       </div>
 
       <BreakOverlay

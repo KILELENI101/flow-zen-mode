@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Play, Pause, RotateCcw, Maximize, Settings } from "lucide-react";
 import { useSound } from "@/hooks/useSound";
+import { usePersistentTimer } from "@/hooks/usePeristentTimer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -27,7 +28,6 @@ interface CustomSettings {
 }
 
 interface TimerCardProps {
-  onFullscreen?: () => void;
   onBreakStart?: (duration: number) => void;
 }
 
@@ -39,8 +39,9 @@ const timerPresets = [
   { name: "Custom", focus: 25, break: 5, cycles: 1 },
 ];
 
-export default function TimerCard({ onFullscreen, onBreakStart }: TimerCardProps) {
+export default function TimerCard({ onBreakStart }: TimerCardProps) {
   const { playTimerSound, startFocusSound, stopFocusSound, startBreakSound, stopBreakSound } = useSound();
+  const { timer, startTimer, pauseTimer, resetTimer, updateTimer } = usePersistentTimer();
   const [selectedPreset, setSelectedPreset] = useState(0);
   const [customSettings, setCustomSettings] = useState<CustomSettings>({
     focusMinutes: 25,
@@ -48,15 +49,7 @@ export default function TimerCard({ onFullscreen, onBreakStart }: TimerCardProps
     cycles: 1,
   });
   const [showCustomDialog, setShowCustomDialog] = useState(false);
-  const [timer, setTimer] = useState<TimerState>({
-    minutes: 25,
-    seconds: 0,
-    isRunning: false,
-    mode: "focus",
-    totalMinutes: 25,
-    currentCycle: 1,
-    maxCycles: 4,
-  });
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const currentPreset = selectedPreset === 4 ? {
     name: "Custom",
@@ -65,95 +58,79 @@ export default function TimerCard({ onFullscreen, onBreakStart }: TimerCardProps
     cycles: customSettings.cycles,
   } : timerPresets[selectedPreset];
 
+  // Check for timer completion
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    
-    if (timer.isRunning) {
-      interval = setInterval(() => {
-        setTimer(prev => {
-          if (prev.seconds > 0) {
-            return { ...prev, seconds: prev.seconds - 1 };
-          } else if (prev.minutes > 0) {
-            return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-          } else {
-            // Timer finished
-            if (prev.mode === "focus") {
-              // Focus session ended, start break
-              playTimerSound('END');
-              stopFocusSound();
-              const breakDuration = currentPreset.break;
-              onBreakStart?.(breakDuration);
-              startBreakSound();
-              return { 
-                ...prev, 
-                isRunning: false,
-                mode: "break",
-                minutes: breakDuration,
-                seconds: 0,
-                totalMinutes: breakDuration,
-              };
-            } else {
-              // Break ended, check if we should start another cycle
-              playTimerSound('BREAK_END');
-              stopBreakSound();
-              const nextCycle = prev.currentCycle + 1;
-              if (nextCycle <= prev.maxCycles) {
-                return { 
-                  ...prev, 
-                  isRunning: false,
-                  mode: "focus",
-                  minutes: currentPreset.focus,
-                  seconds: 0,
-                  totalMinutes: currentPreset.focus,
-                  currentCycle: nextCycle,
-                };
-              } else {
-                // All cycles completed
-                return { 
-                  ...prev, 
-                  isRunning: false,
-                  currentCycle: 1,
-                };
-              }
-            }
-          }
+    if (timer.minutes === 0 && timer.seconds === 0 && !timer.isRunning) {
+      if (timer.mode === "focus") {
+        // Focus session ended, start break
+        playTimerSound('END');
+        stopFocusSound();
+        const breakDuration = currentPreset.break;
+        onBreakStart?.(breakDuration);
+        startBreakSound();
+        updateTimer({ 
+          mode: "break",
+          minutes: breakDuration,
+          seconds: 0,
+          totalMinutes: breakDuration,
         });
-      }, 1000);
+      } else {
+        // Break ended, check if we should start another cycle
+        playTimerSound('BREAK_END');
+        stopBreakSound();
+        const nextCycle = timer.currentCycle + 1;
+        if (nextCycle <= timer.maxCycles) {
+          updateTimer({ 
+            mode: "focus",
+            minutes: currentPreset.focus,
+            seconds: 0,
+            totalMinutes: currentPreset.focus,
+            currentCycle: nextCycle,
+          });
+        } else {
+          // All cycles completed
+          updateTimer({ 
+            currentCycle: 1,
+          });
+        }
+      }
     }
+  }, [timer.minutes, timer.seconds, timer.isRunning, timer.mode, currentPreset, onBreakStart]);
 
-    return () => clearInterval(interval);
-  }, [timer.isRunning, currentPreset.break, currentPreset.focus, onBreakStart]);
+  // Handle fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   const toggleTimer = () => {
-    setTimer(prev => {
-      const newRunning = !prev.isRunning;
-      if (newRunning) {
-        // Starting timer
-        playTimerSound('START');
-        if (prev.mode === "focus") {
-          startFocusSound();
-        } else {
-          startBreakSound();
-        }
+    if (timer.isRunning) {
+      pauseTimer();
+      stopFocusSound();
+      stopBreakSound();
+    } else {
+      startTimer();
+      playTimerSound('START');
+      if (timer.mode === "focus") {
+        startFocusSound();
       } else {
-        // Pausing timer
-        stopFocusSound();
-        stopBreakSound();
+        startBreakSound();
       }
-      return { ...prev, isRunning: newRunning };
-    });
+    }
   };
 
-  const resetTimer = () => {
+  const handleReset = () => {
     stopFocusSound();
     stopBreakSound();
-    const newDuration = timer.mode === "focus" ? currentPreset.focus : currentPreset.break;
-    setTimer({
-      minutes: newDuration,
+    resetTimer({
+      minutes: currentPreset.focus,
       seconds: 0,
-      isRunning: false,
       mode: "focus",
-      totalMinutes: newDuration,
+      totalMinutes: currentPreset.focus,
       currentCycle: 1,
       maxCycles: currentPreset.cycles,
     });
@@ -167,10 +144,9 @@ export default function TimerCard({ onFullscreen, onBreakStart }: TimerCardProps
       cycles: customSettings.cycles,
     } : timerPresets[index];
     
-    setTimer({
+    resetTimer({
       minutes: preset.focus,
       seconds: 0,
-      isRunning: false,
       mode: "focus",
       totalMinutes: preset.focus,
       currentCycle: 1,
@@ -180,10 +156,9 @@ export default function TimerCard({ onFullscreen, onBreakStart }: TimerCardProps
 
   const updateCustomSettings = () => {
     if (selectedPreset === 4) {
-      setTimer({
+      resetTimer({
         minutes: customSettings.focusMinutes,
         seconds: 0,
-        isRunning: false,
         mode: "focus",
         totalMinutes: customSettings.focusMinutes,
         currentCycle: 1,
@@ -191,6 +166,14 @@ export default function TimerCard({ onFullscreen, onBreakStart }: TimerCardProps
       });
     }
     setShowCustomDialog(false);
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(console.error);
+    } else {
+      document.exitFullscreen().catch(console.error);
+    }
   };
 
   const progress = ((timer.totalMinutes * 60 - (timer.minutes * 60 + timer.seconds)) / (timer.totalMinutes * 60)) * 100;
@@ -335,7 +318,7 @@ export default function TimerCard({ onFullscreen, onBreakStart }: TimerCardProps
             <Button
               variant="outline"
               size="lg"
-              onClick={resetTimer}
+              onClick={handleReset}
               className="flex items-center gap-2"
             >
               <RotateCcw className="w-4 h-4" />
@@ -368,11 +351,11 @@ export default function TimerCard({ onFullscreen, onBreakStart }: TimerCardProps
             <Button
               variant="outline"
               size="lg"
-              onClick={onFullscreen}
+              onClick={toggleFullscreen}
               className="flex items-center gap-2"
             >
               <Maximize className="w-4 h-4" />
-              Fullscreen
+              {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
             </Button>
           </div>
         </CardContent>

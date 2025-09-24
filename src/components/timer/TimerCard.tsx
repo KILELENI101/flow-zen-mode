@@ -30,6 +30,7 @@ interface CustomSettings {
 
 interface TimerCardProps {
   onBreakStart?: (duration: number) => void;
+  onTimerComplete?: (sessionType: 'focus' | 'break', duration: number) => void;
 }
 
 const timerPresets = [
@@ -40,7 +41,7 @@ const timerPresets = [
   { name: "Custom", focus: 25, break: 5, cycles: 1 },
 ];
 
-export default function TimerCard({ onBreakStart }: TimerCardProps) {
+export default function TimerCard({ onBreakStart, onTimerComplete }: TimerCardProps) {
   const { playTimerSound, startFocusSound, stopFocusSound, startBreakSound, stopBreakSound } = useSound();
   const { timer, startTimer, pauseTimer, resetTimer, updateTimer } = usePersistentTimer();
   const { addSession } = useStats();
@@ -69,13 +70,7 @@ export default function TimerCard({ onBreakStart }: TimerCardProps) {
         stopFocusSound();
         
         // Add session stats
-        addSession({
-          focusTime: timer.totalMinutes,
-          breakTime: 0,
-          sessionsCompleted: 1,
-          overrides: 0,
-          mode: 'focus',
-        });
+        onTimerComplete?.('focus', timer.totalMinutes);
         
         const breakDuration = currentPreset.break;
         onBreakStart?.(breakDuration);
@@ -92,12 +87,7 @@ export default function TimerCard({ onBreakStart }: TimerCardProps) {
         stopBreakSound();
         
         // Add break stats
-        addSession({
-          focusTime: 0,
-          breakTime: timer.totalMinutes,
-          sessionsCompleted: 0,
-          overrides: 0,
-          mode: 'break',
+        onTimerComplete?.('break', timer.totalMinutes);
         });
         
         const nextCycle = timer.currentCycle + 1;

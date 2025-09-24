@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { Timer, Shield, BarChart3, Settings } from "lucide-react";
+import { Timer, Shield, BarChart3, Settings, LogOut, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import { useToast } from "@/hooks/use-toast";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -17,6 +20,20 @@ const navigationItems = [
 ];
 
 export default function AppLayout({ children, currentTab, onTabChange }: AppLayoutProps) {
+  const { signOut } = useAuth();
+  const { profile } = useProfile();
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      });
+    }
+  };
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
@@ -32,11 +49,29 @@ export default function AppLayout({ children, currentTab, onTabChange }: AppLayo
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
-            <div className="text-right">
-              <p className="text-sm font-medium text-maroon">Ready to Focus</p>
-              <p className="text-xs text-muted-foreground">No active session</p>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center">
+                <User className="w-4 h-4 text-primary-foreground" />
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-medium text-foreground">
+                  {profile?.full_name || 'User'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {profile?.email || 'Loading...'}
+                </p>
+              </div>
             </div>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <LogOut className="w-4 h-4" />
+            </Button>
           </div>
         </div>
       </header>

@@ -35,10 +35,10 @@ interface TimerCardProps {
 
 const timerPresets = [
   { name: "Pomodoro", focus: 25, break: 5, cycles: 4 },
-  { name: "52/17", focus: 52, break: 17, cycles: 1 },
-  { name: "90/20", focus: 90, break: 20, cycles: 1 },
-  { name: "20/20/20", focus: 20, break: 2, cycles: 3 },
-  { name: "Custom", focus: 25, break: 5, cycles: 1 },
+  { name: "52/17", focus: 52, break: 17, cycles: 4 },
+  { name: "90/20", focus: 90, break: 20, cycles: 4 },
+  { name: "20/20/20", focus: 20, break: 2, cycles: 4 },
+  { name: "Custom", focus: 25, break: 5, cycles: 4 },
 ];
 
 export default function TimerCard({ onBreakStart, onTimerComplete }: TimerCardProps) {
@@ -49,7 +49,7 @@ export default function TimerCard({ onBreakStart, onTimerComplete }: TimerCardPr
   const [customSettings, setCustomSettings] = useState<CustomSettings>({
     focusMinutes: 25,
     breakMinutes: 5,
-    cycles: 1,
+    cycles: 4,
   });
   const [showCustomDialog, setShowCustomDialog] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -99,8 +99,12 @@ export default function TimerCard({ onBreakStart, onTimerComplete }: TimerCardPr
             currentCycle: nextCycle,
           });
         } else {
-          // All cycles completed
+          // All cycles completed - start loop again
           updateTimer({ 
+            mode: "focus",
+            minutes: currentPreset.focus,
+            seconds: 0,
+            totalMinutes: currentPreset.focus,
             currentCycle: 1,
           });
         }

@@ -94,40 +94,40 @@ export default function StatsView() {
         <TabsContent value="overview" className="space-y-6">
           {/* Quick Stats Cards */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <Card className="productivity-card">
+            <Card className="bg-gradient-to-br from-maroon/10 to-maroon/5 border-maroon/20">
               <CardContent className="p-4 text-center">
-                <Clock className="w-8 h-8 mx-auto mb-2 text-primary" />
-                <div className="text-2xl font-bold text-foreground">
+                <Clock className="w-8 h-8 mx-auto mb-2 text-maroon" />
+                <div className="text-2xl font-bold text-maroon">
                   {formatTime(stats.totalFocusMinutes)}
                 </div>
                 <p className="text-sm text-muted-foreground">Focus Time</p>
               </CardContent>
             </Card>
             
-            <Card className="productivity-card">
+            <Card className="bg-gradient-to-br from-emerald/10 to-emerald/5 border-emerald/20">
               <CardContent className="p-4 text-center">
-                <Target className="w-8 h-8 mx-auto mb-2 text-success" />
-                <div className="text-2xl font-bold text-foreground">
+                <Target className="w-8 h-8 mx-auto mb-2 text-emerald" />
+                <div className="text-2xl font-bold text-emerald-dark">
                   {stats.focusSessions}
                 </div>
                 <p className="text-sm text-muted-foreground">Focus Sessions</p>
               </CardContent>
             </Card>
             
-            <Card className="productivity-card">
+            <Card className="bg-gradient-to-br from-violet/10 to-violet/5 border-violet/20">
               <CardContent className="p-4 text-center">
-                <Calendar className="w-8 h-8 mx-auto mb-2 text-accent" />
-                <div className="text-2xl font-bold text-foreground">
+                <Calendar className="w-8 h-8 mx-auto mb-2 text-violet" />
+                <div className="text-2xl font-bold text-violet-dark">
                   {stats.todaySessions}
                 </div>
                 <p className="text-sm text-muted-foreground">Today</p>
               </CardContent>
             </Card>
             
-            <Card className="productivity-card">
+            <Card className="bg-gradient-to-br from-golden/10 to-golden/5 border-golden/20">
               <CardContent className="p-4 text-center">
-                <Award className="w-8 h-8 mx-auto mb-2 text-warning" />
-                <div className="text-2xl font-bold text-foreground">
+                <Award className="w-8 h-8 mx-auto mb-2 text-golden-dark" />
+                <div className="text-2xl font-bold text-golden-dark">
                   {stats.completionRate}%
                 </div>
                 <p className="text-sm text-muted-foreground">Completion Rate</p>
@@ -137,45 +137,45 @@ export default function StatsView() {
 
           {/* Time-based Stats */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            <Card className="productivity-card">
+            <Card className="bg-gradient-to-br from-maroon/10 to-maroon/5 border-maroon/20 hover:shadow-lg transition-smooth">
               <CardContent className="p-3 text-center">
-                <div className="text-lg font-bold text-foreground">
+                <div className="text-lg font-bold text-maroon">
                   {stats.todaySessions}
                 </div>
                 <p className="text-xs text-muted-foreground">Today</p>
               </CardContent>
             </Card>
             
-            <Card className="productivity-card">
+            <Card className="bg-gradient-to-br from-emerald/10 to-emerald/5 border-emerald/20 hover:shadow-lg transition-smooth">
               <CardContent className="p-3 text-center">
-                <div className="text-lg font-bold text-foreground">
+                <div className="text-lg font-bold text-emerald-dark">
                   {stats.weekSessions}
                 </div>
                 <p className="text-xs text-muted-foreground">This Week</p>
               </CardContent>
             </Card>
             
-            <Card className="productivity-card">
+            <Card className="bg-gradient-to-br from-violet/10 to-violet/5 border-violet/20 hover:shadow-lg transition-smooth">
               <CardContent className="p-3 text-center">
-                <div className="text-lg font-bold text-foreground">
+                <div className="text-lg font-bold text-violet-dark">
                   {stats.monthSessions}
                 </div>
                 <p className="text-xs text-muted-foreground">This Month</p>
               </CardContent>
             </Card>
             
-            <Card className="productivity-card">
+            <Card className="bg-gradient-to-br from-golden/10 to-golden/5 border-golden/20 hover:shadow-lg transition-smooth">
               <CardContent className="p-3 text-center">
-                <div className="text-lg font-bold text-foreground">
+                <div className="text-lg font-bold text-golden-dark">
                   {stats.sixMonthSessions}
                 </div>
                 <p className="text-xs text-muted-foreground">6 Months</p>
               </CardContent>
             </Card>
             
-            <Card className="productivity-card">
+            <Card className="bg-gradient-to-br from-cyan/10 to-cyan/5 border-cyan/20 hover:shadow-lg transition-smooth">
               <CardContent className="p-3 text-center">
-                <div className="text-lg font-bold text-foreground">
+                <div className="text-lg font-bold text-cyan-dark">
                   {stats.yearSessions}
                 </div>
                 <p className="text-xs text-muted-foreground">This Year</p>

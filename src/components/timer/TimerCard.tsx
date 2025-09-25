@@ -88,7 +88,6 @@ export default function TimerCard({ onBreakStart, onTimerComplete }: TimerCardPr
         
         // Add break stats
         onTimerComplete?.('break', timer.totalMinutes);
-        });
         
         const nextCycle = timer.currentCycle + 1;
         if (nextCycle <= timer.maxCycles) {

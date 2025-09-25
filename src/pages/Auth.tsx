@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,6 +24,11 @@ const Auth = () => {
       navigate('/', { replace: true });
     }
   }, [user, navigate]);
+
+  // If user is already authenticated, don't render auth form
+  if (user) {
+    return null;
+  }
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();

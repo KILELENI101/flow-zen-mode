@@ -34,7 +34,11 @@ serve(async (req) => {
       );
     }
 
-    console.log('Fetching stats for user:', user.id);
+    // Parse query parameters for time period
+    const url = new URL(req.url);
+    const period = url.searchParams.get('period') || 'all';
+    
+    console.log(`Fetching stats for user ${user.id} with period: ${period}`);
 
     // Get user's timer sessions
     const { data: sessions, error: sessionsError } = await supabaseClient
@@ -51,39 +55,112 @@ serve(async (req) => {
       );
     }
 
-    // Calculate statistics
-    const totalSessions = sessions?.length || 0;
-    const completedSessions = sessions?.filter(s => s.status === 'completed').length || 0;
-    const focusSessions = sessions?.filter(s => s.session_type === 'focus' && s.status === 'completed').length || 0;
-    const totalFocusMinutes = sessions
-      ?.filter(s => s.session_type === 'focus' && s.status === 'completed')
-      .reduce((sum, s) => sum + (s.completed_duration_minutes || 0), 0) || 0;
+    // Calculate date ranges
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - today.getDay());
+    
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+    
+    const yearStart = new Date(now.getFullYear(), 0, 1);
 
-    // Calculate today's sessions
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Filter sessions based on period
+    let filteredSessions = sessions || [];
+    
+    switch (period) {
+      case 'today':
+        filteredSessions = sessions?.filter(s => {
+          const sessionDate = new Date(s.created_at);
+          return sessionDate >= today;
+        }) || [];
+        break;
+      case 'week':
+        filteredSessions = sessions?.filter(s => {
+          const sessionDate = new Date(s.created_at);
+          return sessionDate >= weekStart;
+        }) || [];
+        break;
+      case 'month':
+        filteredSessions = sessions?.filter(s => {
+          const sessionDate = new Date(s.created_at);
+          return sessionDate >= monthStart;
+        }) || [];
+        break;
+      case '6months':
+        filteredSessions = sessions?.filter(s => {
+          const sessionDate = new Date(s.created_at);
+          return sessionDate >= sixMonthsAgo;
+        }) || [];
+        break;
+      case 'year':
+        filteredSessions = sessions?.filter(s => {
+          const sessionDate = new Date(s.created_at);
+          return sessionDate >= yearStart;
+        }) || [];
+        break;
+      default:
+        // 'all' - use all sessions
+        break;
+    }
+
+    const focusSessions = filteredSessions.filter(s => s.session_type === 'focus');
+    const completedSessions = filteredSessions.filter(s => s.status === 'completed');
+    
+    // Always calculate these for comparison
     const todaySessions = sessions?.filter(s => {
       const sessionDate = new Date(s.created_at);
       return sessionDate >= today;
-    }).length || 0;
+    }) || [];
 
-    // Calculate this week's sessions
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - today.getDay());
     const weekSessions = sessions?.filter(s => {
       const sessionDate = new Date(s.created_at);
       return sessionDate >= weekStart;
-    }).length || 0;
+    }) || [];
+
+    const monthSessions = sessions?.filter(s => {
+      const sessionDate = new Date(s.created_at);
+      return sessionDate >= monthStart;
+    }) || [];
+
+    const sixMonthSessions = sessions?.filter(s => {
+      const sessionDate = new Date(s.created_at);
+      return sessionDate >= sixMonthsAgo;
+    }) || [];
+
+    const yearSessions = sessions?.filter(s => {
+      const sessionDate = new Date(s.created_at);
+      return sessionDate >= yearStart;
+    }) || [];
+
+    const totalFocusMinutes = focusSessions.reduce((sum, session) => {
+      return sum + (session.completed_duration_minutes || 0);
+    }, 0);
+
+    const averageSessionLength = focusSessions.length > 0 
+      ? Math.round(totalFocusMinutes / focusSessions.length) 
+      : 0;
+
+    const completionRate = filteredSessions.length > 0
+      ? Math.round((completedSessions.length / filteredSessions.length) * 100)
+      : 0;
 
     const stats = {
-      totalSessions,
-      completedSessions,
-      focusSessions,
+      totalSessions: filteredSessions.length,
+      completedSessions: completedSessions.length,
+      focusSessions: focusSessions.length,
       totalFocusMinutes,
-      todaySessions,
-      weekSessions,
-      averageSessionLength: focusSessions > 0 ? Math.round(totalFocusMinutes / focusSessions) : 0,
-      completionRate: totalSessions > 0 ? Math.round((completedSessions / totalSessions) * 100) : 0,
+      todaySessions: todaySessions.length,
+      weekSessions: weekSessions.length,
+      monthSessions: monthSessions.length,
+      sixMonthSessions: sixMonthSessions.length,
+      yearSessions: yearSessions.length,
+      averageSessionLength,
+      completionRate,
+      period
     };
 
     console.log('Calculated stats:', stats);

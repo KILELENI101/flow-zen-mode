@@ -1,17 +1,10 @@
 import { useState } from "react";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "@/contexts/AuthContext";
 import AuthGuard from "@/components/layout/AuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
 import TimerView from "@/views/TimerView";
 import BlockerView from "@/views/BlockerView";
 import StatsView from "@/views/StatsView";
 import SettingsView from "@/views/SettingsView";
-
-const queryClient = new QueryClient();
 
 const App = () => {
   const [currentTab, setCurrentTab] = useState("timer");
@@ -32,19 +25,11 @@ const App = () => {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <AuthGuard>
-            <AppLayout currentTab={currentTab} onTabChange={setCurrentTab}>
-              {renderCurrentView()}
-            </AppLayout>
-          </AuthGuard>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <AuthGuard>
+      <AppLayout currentTab={currentTab} onTabChange={setCurrentTab}>
+        {renderCurrentView()}
+      </AppLayout>
+    </AuthGuard>
   );
 };
 

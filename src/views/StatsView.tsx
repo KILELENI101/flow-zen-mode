@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { BarChart3, Clock, Target, TrendingUp, Calendar, Award, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useStats } from "@/hooks/useStats";
 
 function formatTime(minutes: number) {
@@ -12,9 +14,23 @@ function formatTime(minutes: number) {
   return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 }
 
+const timePeriods = [
+  { value: 'all', label: 'All Time' },
+  { value: 'today', label: 'Today' },
+  { value: 'week', label: 'This Week' },
+  { value: 'month', label: 'This Month' },
+  { value: '6months', label: 'Last 6 Months' },
+  { value: 'year', label: 'This Year' },
+];
+
 export default function StatsView() {
-  const { stats, loading, refetch } = useStats();
+  const [selectedPeriod, setSelectedPeriod] = useState('all');
+  const { stats, loading, fetchStats } = useStats(selectedPeriod);
   
+  const handlePeriodChange = (value: string) => {
+    setSelectedPeriod(value);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -34,7 +50,7 @@ export default function StatsView() {
         <p className="text-muted-foreground max-w-md mx-auto">
           Start using the timer to track your productivity and see your progress here.
         </p>
-        <Button onClick={() => refetch()} variant="outline">
+        <Button onClick={() => fetchStats(selectedPeriod)} variant="outline">
           Refresh Stats
         </Button>
       </div>
@@ -53,6 +69,22 @@ export default function StatsView() {
         </p>
       </div>
 
+      {/* Time Period Selector */}
+      <div className="flex justify-center">
+        <Select value={selectedPeriod} onValueChange={handlePeriodChange}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {timePeriods.map((period) => (
+              <SelectItem key={period.value} value={period.value}>
+                {period.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -68,7 +100,7 @@ export default function StatsView() {
                 <div className="text-2xl font-bold text-foreground">
                   {formatTime(stats.totalFocusMinutes)}
                 </div>
-                <p className="text-sm text-muted-foreground">Total Focus Time</p>
+                <p className="text-sm text-muted-foreground">Focus Time</p>
               </CardContent>
             </Card>
             
@@ -96,9 +128,57 @@ export default function StatsView() {
               <CardContent className="p-4 text-center">
                 <Award className="w-8 h-8 mx-auto mb-2 text-warning" />
                 <div className="text-2xl font-bold text-foreground">
+                  {stats.completionRate}%
+                </div>
+                <p className="text-sm text-muted-foreground">Completion Rate</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Time-based Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <Card className="productivity-card">
+              <CardContent className="p-3 text-center">
+                <div className="text-lg font-bold text-foreground">
+                  {stats.todaySessions}
+                </div>
+                <p className="text-xs text-muted-foreground">Today</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="productivity-card">
+              <CardContent className="p-3 text-center">
+                <div className="text-lg font-bold text-foreground">
                   {stats.weekSessions}
                 </div>
-                <p className="text-sm text-muted-foreground">This Week</p>
+                <p className="text-xs text-muted-foreground">This Week</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="productivity-card">
+              <CardContent className="p-3 text-center">
+                <div className="text-lg font-bold text-foreground">
+                  {stats.monthSessions}
+                </div>
+                <p className="text-xs text-muted-foreground">This Month</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="productivity-card">
+              <CardContent className="p-3 text-center">
+                <div className="text-lg font-bold text-foreground">
+                  {stats.sixMonthSessions}
+                </div>
+                <p className="text-xs text-muted-foreground">6 Months</p>
+              </CardContent>
+            </Card>
+            
+            <Card className="productivity-card">
+              <CardContent className="p-3 text-center">
+                <div className="text-lg font-bold text-foreground">
+                  {stats.yearSessions}
+                </div>
+                <p className="text-xs text-muted-foreground">This Year</p>
               </CardContent>
             </Card>
           </div>
@@ -170,9 +250,9 @@ export default function StatsView() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-accent"></div>
-                      <span className="text-sm">This Week</span>
+                      <span className="text-sm">Period: {stats.period === 'all' ? 'All Time' : timePeriods.find(p => p.value === stats.period)?.label}</span>
                     </div>
-                    <Badge variant="secondary">{stats.weekSessions}</Badge>
+                    <Badge variant="secondary">{stats.totalSessions}</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -192,7 +272,7 @@ export default function StatsView() {
                 </div>
                 <p className="text-muted-foreground">Session Completion Rate</p>
                 <div className="text-sm text-muted-foreground">
-                  You complete {stats.completedSessions} out of {stats.totalSessions} sessions on average
+                  You complete {stats.completedSessions} out of {stats.totalSessions} sessions
                 </div>
               </div>
               
@@ -213,16 +293,47 @@ export default function StatsView() {
                 
                 <div className="text-center p-4 rounded-lg bg-muted/20">
                   <div className="text-2xl font-bold text-foreground">
-                    {stats.todaySessions}
+                    {stats.focusSessions}
                   </div>
-                  <p className="text-sm text-muted-foreground">Today's Sessions</p>
+                  <p className="text-sm text-muted-foreground">Focus Sessions</p>
+                </div>
+              </div>
+
+              {/* Time Period Comparison */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4">
+                <div className="text-center p-3 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5">
+                  <div className="text-lg font-bold text-foreground">
+                    {stats.weekSessions}
+                  </div>
+                  <p className="text-xs text-muted-foreground">This Week</p>
+                </div>
+                
+                <div className="text-center p-3 rounded-lg bg-gradient-to-br from-success/10 to-success/5">
+                  <div className="text-lg font-bold text-foreground">
+                    {stats.monthSessions}
+                  </div>
+                  <p className="text-xs text-muted-foreground">This Month</p>
+                </div>
+                
+                <div className="text-center p-3 rounded-lg bg-gradient-to-br from-accent/10 to-accent/5">
+                  <div className="text-lg font-bold text-foreground">
+                    {stats.sixMonthSessions}
+                  </div>
+                  <p className="text-xs text-muted-foreground">6 Months</p>
+                </div>
+                
+                <div className="text-center p-3 rounded-lg bg-gradient-to-br from-warning/10 to-warning/5">
+                  <div className="text-lg font-bold text-foreground">
+                    {stats.yearSessions}
+                  </div>
+                  <p className="text-xs text-muted-foreground">This Year</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
           <div className="text-center">
-            <Button onClick={() => refetch()} variant="outline">
+            <Button onClick={() => fetchStats(selectedPeriod)} variant="outline">
               <TrendingUp className="w-4 h-4 mr-2" />
               Refresh Statistics
             </Button>

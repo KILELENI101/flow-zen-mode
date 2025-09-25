@@ -9,25 +9,29 @@ interface Stats {
   totalFocusMinutes: number;
   todaySessions: number;
   weekSessions: number;
+  monthSessions: number;
+  sixMonthSessions: number;
+  yearSessions: number;
   averageSessionLength: number;
   completionRate: number;
+  period: string;
 }
 
-export const useStats = () => {
+export const useStats = (period = 'all') => {
   const { user, session } = useAuth();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user && session) {
-      fetchStats();
+      fetchStats(period);
     } else {
       setStats(null);
       setLoading(false);
     }
-  }, [user, session]);
+  }, [user, session, period]);
 
-  const fetchStats = async () => {
+  const fetchStats = async (timePeriod = 'all') => {
     if (!session) return;
 
     try {
@@ -36,6 +40,7 @@ export const useStats = () => {
         headers: {
           Authorization: `Bearer ${session.access_token}`,
         },
+        body: { period: timePeriod }
       });
 
       if (error) {
@@ -85,6 +90,7 @@ export const useStats = () => {
     stats,
     loading,
     addSession,
-    refetch: fetchStats,
+    refetch: () => fetchStats(period),
+    fetchStats,
   };
 };

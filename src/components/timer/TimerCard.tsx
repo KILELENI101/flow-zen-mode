@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { Play, Pause, RotateCcw, Maximize, Settings } from "lucide-react";
 import { useSound } from "@/hooks/useSound";
-import { usePersistentTimer } from "@/hooks/usePeristentTimer";
-import { useStats } from "@/hooks/useStats";
+import { useTimer } from "@/contexts/TimerContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -28,10 +27,7 @@ interface CustomSettings {
   cycles: number;
 }
 
-interface TimerCardProps {
-  onBreakStart?: (duration: number) => void;
-  onTimerComplete?: (sessionType: 'focus' | 'break', duration: number) => void;
-}
+interface TimerCardProps {}
 
 const timerPresets = [
   { name: "Pomodoro", focus: 25, break: 5, cycles: 4 },
@@ -41,10 +37,9 @@ const timerPresets = [
   { name: "Custom", focus: 25, break: 5, cycles: 4 },
 ];
 
-export default function TimerCard({ onBreakStart, onTimerComplete }: TimerCardProps) {
+export default function TimerCard({}: TimerCardProps) {
   const { playTimerSound, startFocusSound, stopFocusSound, startBreakSound, stopBreakSound } = useSound();
-  const { timer, startTimer, pauseTimer, resetTimer, updateTimer } = usePersistentTimer();
-  const { addSession } = useStats();
+  const { timer, startTimer, pauseTimer, resetTimer, updateTimer, currentPreset, setCurrentPreset } = useTimer();
   const [selectedPreset, setSelectedPreset] = useState(0);
   const [customSettings, setCustomSettings] = useState<CustomSettings>({
     focusMinutes: 25,
@@ -54,63 +49,12 @@ export default function TimerCard({ onBreakStart, onTimerComplete }: TimerCardPr
   const [showCustomDialog, setShowCustomDialog] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const currentPreset = selectedPreset === 4 ? {
+  const displayPreset = selectedPreset === 4 ? {
     name: "Custom",
     focus: customSettings.focusMinutes,
     break: customSettings.breakMinutes,
     cycles: customSettings.cycles,
   } : timerPresets[selectedPreset];
-
-  // Check for timer completion
-  useEffect(() => {
-    if (timer.minutes === 0 && timer.seconds === 0 && !timer.isRunning) {
-      if (timer.mode === "focus") {
-        // Focus session ended, start break
-        playTimerSound('END');
-        stopFocusSound();
-        
-        // Add session stats
-        onTimerComplete?.('focus', timer.totalMinutes);
-        
-        const breakDuration = currentPreset.break;
-        onBreakStart?.(breakDuration);
-        startBreakSound();
-        updateTimer({ 
-          mode: "break",
-          minutes: breakDuration,
-          seconds: 0,
-          totalMinutes: breakDuration,
-        });
-      } else {
-        // Break ended, check if we should start another cycle
-        playTimerSound('BREAK_END');
-        stopBreakSound();
-        
-        // Add break stats
-        onTimerComplete?.('break', timer.totalMinutes);
-        
-        const nextCycle = timer.currentCycle + 1;
-        if (nextCycle <= timer.maxCycles) {
-          updateTimer({ 
-            mode: "focus",
-            minutes: currentPreset.focus,
-            seconds: 0,
-            totalMinutes: currentPreset.focus,
-            currentCycle: nextCycle,
-          });
-        } else {
-          // All cycles completed - start loop again
-          updateTimer({ 
-            mode: "focus",
-            minutes: currentPreset.focus,
-            seconds: 0,
-            totalMinutes: currentPreset.focus,
-            currentCycle: 1,
-          });
-        }
-      }
-    }
-  }, [timer.minutes, timer.seconds, timer.isRunning, timer.mode, currentPreset, onBreakStart, addSession]);
 
   // Handle fullscreen changes
   useEffect(() => {
@@ -142,23 +86,25 @@ export default function TimerCard({ onBreakStart, onTimerComplete }: TimerCardPr
     stopFocusSound();
     stopBreakSound();
     resetTimer({
-      minutes: currentPreset.focus,
+      minutes: displayPreset.focus,
       seconds: 0,
       mode: "focus",
-      totalMinutes: currentPreset.focus,
+      totalMinutes: displayPreset.focus,
       currentCycle: 1,
-      maxCycles: currentPreset.cycles,
+      maxCycles: displayPreset.cycles,
     });
   };
 
   const selectPreset = (index: number) => {
     setSelectedPreset(index);
     const preset = index === 4 ? {
+      name: "Custom",
       focus: customSettings.focusMinutes,
       break: customSettings.breakMinutes,
       cycles: customSettings.cycles,
     } : timerPresets[index];
     
+    setCurrentPreset(preset);
     resetTimer({
       minutes: preset.focus,
       seconds: 0,
@@ -171,6 +117,13 @@ export default function TimerCard({ onBreakStart, onTimerComplete }: TimerCardPr
 
   const updateCustomSettings = () => {
     if (selectedPreset === 4) {
+      const customPreset = {
+        name: "Custom",
+        focus: customSettings.focusMinutes,
+        break: customSettings.breakMinutes,
+        cycles: customSettings.cycles,
+      };
+      setCurrentPreset(customPreset);
       resetTimer({
         minutes: customSettings.focusMinutes,
         seconds: 0,
@@ -301,7 +254,7 @@ export default function TimerCard({ onBreakStart, onTimerComplete }: TimerCardPr
             </Badge>
           </div>
           <CardTitle className="text-lg text-muted-foreground">
-            {currentPreset.name} - {timer.mode === "focus" ? "Stay Focused" : "Take a Break"}
+            {displayPreset.name} - {timer.mode === "focus" ? "Stay Focused" : "Take a Break"}
           </CardTitle>
           <p className="text-sm text-muted-foreground">
             Session {timer.currentCycle} of {timer.maxCycles}

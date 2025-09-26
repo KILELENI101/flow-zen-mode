@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { TimerProvider } from "@/contexts/TimerContext";
 import AuthGuard from "@/components/layout/AuthGuard";
 import AppLayout from "@/components/layout/AppLayout";
 import TimerView from "@/views/TimerView";
@@ -26,9 +27,11 @@ const App = () => {
 
   return (
     <AuthGuard>
-      <AppLayout currentTab={currentTab} onTabChange={setCurrentTab}>
-        {renderCurrentView()}
-      </AppLayout>
+      <TimerProvider>
+        <AppLayout currentTab={currentTab} onTabChange={setCurrentTab}>
+          {renderCurrentView()}
+        </AppLayout>
+      </TimerProvider>
     </AuthGuard>
   );
 };

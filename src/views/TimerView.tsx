@@ -1,29 +1,9 @@
-import { useState, useEffect } from "react";
 import TimerCard from "@/components/timer/TimerCard";
 import BreakOverlay from "@/components/timer/BreakOverlay";
-import { useStats } from "@/hooks/useStats";
+import { useTimer } from "@/contexts/TimerContext";
 
 export default function TimerView() {
-  const [showBreakOverlay, setShowBreakOverlay] = useState(false);
-  const [breakDuration, setBreakDuration] = useState(5);
-  const { addSession } = useStats();
-
-  const handleBreakStart = (duration: number) => {
-    setBreakDuration(duration);
-    setShowBreakOverlay(true);
-  };
-
-  const handleTimerComplete = async (sessionType: 'focus' | 'break', duration: number) => {
-    await addSession(sessionType, duration);
-  };
-
-  const handleCloseBreak = () => {
-    setShowBreakOverlay(false);
-    // Exit fullscreen when break ends
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(console.error);
-    }
-  };
+  const { showBreakOverlay, setShowBreakOverlay, breakDuration } = useTimer();
 
   return (
     <div className="space-y-8 animate-fade-in-scale">
@@ -35,15 +15,12 @@ export default function TimerView() {
       </div>
 
       <div className="max-w-4xl mx-auto">
-        <TimerCard 
-          onBreakStart={handleBreakStart} 
-          onTimerComplete={handleTimerComplete}
-        />
+        <TimerCard />
       </div>
 
       <BreakOverlay
         isVisible={showBreakOverlay}
-        onClose={handleCloseBreak}
+        onClose={setShowBreakOverlay}
         duration={breakDuration}
       />
     </div>

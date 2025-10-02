@@ -96,13 +96,14 @@ export default function TimerCard({}: TimerCardProps) {
   };
 
   const selectPreset = (index: number) => {
+    if (index === 4) {
+      // For custom preset, just show the dialog
+      setShowCustomDialog(true);
+      return;
+    }
+    
     setSelectedPreset(index);
-    const preset = index === 4 ? {
-      name: "Custom",
-      focus: customSettings.focusMinutes,
-      break: customSettings.breakMinutes,
-      cycles: customSettings.cycles,
-    } : timerPresets[index];
+    const preset = timerPresets[index];
     
     setCurrentPreset(preset);
     resetTimer({
@@ -116,23 +117,22 @@ export default function TimerCard({}: TimerCardProps) {
   };
 
   const updateCustomSettings = () => {
-    if (selectedPreset === 4) {
-      const customPreset = {
-        name: "Custom",
-        focus: customSettings.focusMinutes,
-        break: customSettings.breakMinutes,
-        cycles: customSettings.cycles,
-      };
-      setCurrentPreset(customPreset);
-      resetTimer({
-        minutes: customSettings.focusMinutes,
-        seconds: 0,
-        mode: "focus",
-        totalMinutes: customSettings.focusMinutes,
-        currentCycle: 1,
-        maxCycles: customSettings.cycles,
-      });
-    }
+    setSelectedPreset(4);
+    const customPreset = {
+      name: "Custom",
+      focus: customSettings.focusMinutes,
+      break: customSettings.breakMinutes,
+      cycles: customSettings.cycles,
+    };
+    setCurrentPreset(customPreset);
+    resetTimer({
+      minutes: customSettings.focusMinutes,
+      seconds: 0,
+      mode: "focus",
+      totalMinutes: customSettings.focusMinutes,
+      currentCycle: 1,
+      maxCycles: customSettings.cycles,
+    });
     setShowCustomDialog(false);
   };
 
@@ -155,11 +155,10 @@ export default function TimerCard({}: TimerCardProps) {
           <Button
             key={preset.name}
             variant={selectedPreset === index ? "default" : "outline"}
-            onClick={() => index === 4 ? setShowCustomDialog(true) : selectPreset(index)}
+            onClick={() => selectPreset(index)}
             className={cn(
-              "h-auto p-3 flex flex-col items-center gap-1 transition-smooth relative",
-              selectedPreset === index && index !== 4 && "bg-gradient-primary",
-              index === 4 && "bg-gradient-primary text-primary-foreground"
+              "h-auto p-3 flex flex-col items-center gap-1 transition-smooth",
+              selectedPreset === index && "bg-gradient-primary text-primary-foreground"
             )}
           >
             <span className="font-semibold text-sm">{preset.name}</span>

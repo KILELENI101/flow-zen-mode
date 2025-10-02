@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Play, Pause, RotateCcw, Maximize, Settings } from "lucide-react";
+import { Play, Pause, RotateCcw, Maximize } from "lucide-react";
 import { useSound } from "@/hooks/useSound";
 import { useTimer } from "@/contexts/TimerContext";
 import { Button } from "@/components/ui/button";
@@ -155,176 +155,180 @@ export default function TimerCard({}: TimerCardProps) {
           <Button
             key={preset.name}
             variant={selectedPreset === index ? "default" : "outline"}
-            onClick={() => selectPreset(index)}
+            onClick={() => index === 4 ? setShowCustomDialog(true) : selectPreset(index)}
             className={cn(
               "h-auto p-3 flex flex-col items-center gap-1 transition-smooth relative",
-              selectedPreset === index && "bg-gradient-primary"
+              selectedPreset === index && index !== 4 && "bg-gradient-primary",
+              index === 4 && "bg-gradient-primary text-primary-foreground"
             )}
           >
             <span className="font-semibold text-sm">{preset.name}</span>
             <span className="text-xs opacity-80">
-              {index === 4 ? `${customSettings.focusMinutes}m / ${customSettings.breakMinutes}m` : `${preset.focus}m / ${preset.break}m`}
+              {index === 4 ? "Your Time" : `${preset.focus}m / ${preset.break}m`}
             </span>
-            {index === 4 && (
-              <Dialog open={showCustomDialog} onOpenChange={setShowCustomDialog}>
-                <DialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="absolute top-1 right-1 h-6 w-6 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowCustomDialog(true);
-                    }}
-                  >
-                    <Settings className="w-3 h-3" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Custom Timer Settings</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="focus-minutes">Focus Time (minutes)</Label>
-                      <Input
-                        id="focus-minutes"
-                        type="number"
-                        min="1"
-                        max="180"
-                        value={customSettings.focusMinutes}
-                        onChange={(e) => setCustomSettings(prev => ({
-                          ...prev,
-                          focusMinutes: parseInt(e.target.value) || 25
-                        }))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="break-minutes">Break Time (minutes)</Label>
-                      <Input
-                        id="break-minutes"
-                        type="number"
-                        min="1"
-                        max="60"
-                        value={customSettings.breakMinutes}
-                        onChange={(e) => setCustomSettings(prev => ({
-                          ...prev,
-                          breakMinutes: parseInt(e.target.value) || 5
-                        }))}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cycles">Number of Cycles</Label>
-                      <Input
-                        id="cycles"
-                        type="number"
-                        min="1"
-                        max="10"
-                        value={customSettings.cycles}
-                        onChange={(e) => setCustomSettings(prev => ({
-                          ...prev,
-                          cycles: parseInt(e.target.value) || 1
-                        }))}
-                      />
-                    </div>
-                    <Button onClick={updateCustomSettings} className="w-full">
-                      Apply Settings
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
           </Button>
         ))}
       </div>
 
-      {/* Main Timer Card */}
-      <Card className={cn(
-        "relative overflow-hidden transition-smooth",
-        timer.mode === "focus" 
-          ? "border-primary/20 bg-gradient-to-br from-primary/5 to-transparent" 
-          : "border-success/20 bg-gradient-to-br from-success/5 to-transparent"
-      )}>
-        <CardHeader className="text-center pb-2">
-          <div className="flex items-center justify-center gap-2">
-            <Badge variant={timer.mode === "focus" ? "default" : "secondary"} className={cn(
-              timer.mode === "focus" ? "bg-primary" : "bg-success"
-            )}>
-              {timer.mode === "focus" ? "Focus Session" : "Break Time"}
-            </Badge>
-          </div>
-          <CardTitle className="text-lg text-muted-foreground">
-            {displayPreset.name} - {timer.mode === "focus" ? "Stay Focused" : "Take a Break"}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            Session {timer.currentCycle} of {timer.maxCycles}
-          </p>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          {/* Timer Display */}
-          <div className="text-center">
-            <div className={cn(
-              "text-6xl md:text-7xl font-mono font-bold transition-smooth timer-ring",
-              timer.mode === "focus" ? "text-primary" : "text-success"
-            )}>
-              {timeString}
-            </div>
-            <div className="mt-2">
-              <Progress 
-                value={progress} 
-                className={cn(
-                  "h-2 transition-smooth",
-                  timer.mode === "focus" ? "[&>div]:bg-primary" : "[&>div]:bg-success"
-                )}
+      {/* Custom Timer Dialog */}
+      <Dialog open={showCustomDialog} onOpenChange={setShowCustomDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Custom Timer Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="focus-minutes">Focus Time (minutes)</Label>
+              <Input
+                id="focus-minutes"
+                type="number"
+                min="1"
+                max="180"
+                value={customSettings.focusMinutes}
+                onChange={(e) => setCustomSettings(prev => ({
+                  ...prev,
+                  focusMinutes: parseInt(e.target.value) || 1
+                }))}
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="break-minutes">Break Time (minutes)</Label>
+              <Input
+                id="break-minutes"
+                type="number"
+                min="1"
+                max="60"
+                value={customSettings.breakMinutes}
+                onChange={(e) => setCustomSettings(prev => ({
+                  ...prev,
+                  breakMinutes: parseInt(e.target.value) || 1
+                }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="cycles">Number of Cycles</Label>
+              <Input
+                id="cycles"
+                type="number"
+                min="1"
+                max="10"
+                value={customSettings.cycles}
+                onChange={(e) => setCustomSettings(prev => ({
+                  ...prev,
+                  cycles: parseInt(e.target.value) || 1
+                }))}
+              />
+            </div>
+            <Button onClick={updateCustomSettings} className="w-full">
+              Apply Settings
+            </Button>
           </div>
+        </DialogContent>
+      </Dialog>
 
-          {/* Control Buttons */}
-          <div className="flex items-center justify-center gap-4">
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={handleReset}
-              className="flex items-center gap-2"
-            >
-              <RotateCcw className="w-4 h-4" />
-              Reset
-            </Button>
+      {/* Main Timer Card - Circular Display */}
+      <Card className={cn(
+        "relative overflow-hidden transition-smooth border-0 shadow-lg",
+        timer.mode === "focus" 
+          ? "bg-gradient-to-br from-background to-primary/5" 
+          : "bg-gradient-to-br from-background to-success/5"
+      )}>
+        <CardContent className="py-12">
+          {/* Circular Timer Display */}
+          <div className="flex flex-col items-center justify-center space-y-8">
+            {/* Circle Timer */}
+            <div className="relative">
+              {/* Background Circle */}
+              <svg className="transform -rotate-90" width="280" height="280">
+                <circle
+                  cx="140"
+                  cy="140"
+                  r="120"
+                  stroke="currentColor"
+                  strokeWidth="12"
+                  fill="none"
+                  className="text-muted/20"
+                />
+                {/* Progress Circle */}
+                <circle
+                  cx="140"
+                  cy="140"
+                  r="120"
+                  stroke="currentColor"
+                  strokeWidth="12"
+                  fill="none"
+                  strokeDasharray={`${2 * Math.PI * 120}`}
+                  strokeDashoffset={`${2 * Math.PI * 120 * (1 - progress / 100)}`}
+                  className={cn(
+                    "transition-all duration-1000 ease-linear",
+                    timer.mode === "focus" ? "text-maroon" : "text-success"
+                  )}
+                  strokeLinecap="round"
+                />
+              </svg>
+              
+              {/* Timer Text in Center */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                <div className={cn(
+                  "text-6xl font-mono font-bold transition-smooth",
+                  timer.mode === "focus" ? "text-maroon" : "text-success"
+                )}>
+                  {timeString}
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  {timer.mode === "focus" ? "Focus Time" : "Break Time"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Session {timer.currentCycle} of {timer.maxCycles}
+                </p>
+              </div>
+            </div>
 
-            <Button
-              size="lg"
-              onClick={toggleTimer}
-              className={cn(
-                "flex items-center gap-2 px-8 text-lg transition-smooth",
-                timer.mode === "focus" 
-                  ? "bg-gradient-primary hover:opacity-90" 
-                  : "bg-gradient-success hover:opacity-90"
-              )}
-            >
-              {timer.isRunning ? (
-                <>
-                  <Pause className="w-5 h-5" />
-                  Pause
-                </>
-              ) : (
-                <>
-                  <Play className="w-5 h-5" />
-                  Start
-                </>
-              )}
-            </Button>
+            {/* Control Buttons */}
+            <div className="flex items-center justify-center gap-4">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleReset}
+                className="flex items-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Reset
+              </Button>
 
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={toggleFullscreen}
-              className="flex items-center gap-2"
-            >
-              <Maximize className="w-4 h-4" />
-              {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
-            </Button>
+              <Button
+                size="lg"
+                onClick={toggleTimer}
+                className={cn(
+                  "flex items-center gap-2 px-8 text-lg transition-smooth",
+                  timer.mode === "focus" 
+                    ? "bg-success hover:bg-success/90 text-success-foreground" 
+                    : "bg-success hover:bg-success/90 text-success-foreground"
+                )}
+              >
+                {timer.isRunning ? (
+                  <>
+                    <Pause className="w-5 h-5" />
+                    Pause
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-5 h-5" />
+                    {timer.mode === "focus" ? "Start Focus" : "Start Break"}
+                  </>
+                )}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={toggleFullscreen}
+                className="flex items-center gap-2"
+              >
+                <Maximize className="w-4 h-4" />
+                Fullscreen
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
